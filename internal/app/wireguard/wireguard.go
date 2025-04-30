@@ -144,6 +144,9 @@ func (m Manager) handleUserLoginEvent(userId domain.UserIdentifier) {
 		err := m.db.SavePeer(context.Background(), peer.Identifier, func(p *domain.Peer) (*domain.Peer, error) {
 			peer.CopyCalculatedAttributes(p)
 			peer.ExpiresAt = &expiration
+			if peer.DisabledReason == domain.DisabledReasonExpired {
+				peer.Disabled = nil
+			}
 			return &peer, nil
 		})
 		if err != nil {
