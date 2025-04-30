@@ -190,7 +190,7 @@ func (m Manager) CreatePeer(ctx context.Context, peer *domain.Peer) (*domain.Pee
 			return nil, fmt.Errorf("failed to prepare peer for interface %s: %w", peer.InterfaceIdentifier, err)
 		}
 
-		preparedPeer.OverwriteUserEditableFields(peer, m.cfg)
+		preparedPeer.OverwriteUserEditableFields(peer)
 
 		peer = preparedPeer
 	}
@@ -278,7 +278,7 @@ func (m Manager) UpdatePeer(ctx context.Context, peer *domain.Peer) (*domain.Pee
 		if err != nil {
 			return nil, fmt.Errorf("unable to load existing peer %s: %w", peer.Identifier, err)
 		}
-		originalPeer.OverwriteUserEditableFields(peer, m.cfg)
+		originalPeer.OverwriteUserEditableFields(peer)
 
 		peer = originalPeer
 	}

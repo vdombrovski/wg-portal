@@ -131,8 +131,11 @@ func (p *Peer) GenerateDisplayName(prefix string) {
 // OverwriteUserEditableFields overwrites the user editable fields of the peer with the values from the userPeer
 func (p *Peer) OverwriteUserEditableFields(userPeer *Peer, cfg *config.Config) {
 	p.DisplayName = userPeer.DisplayName
-	p.Interface.PublicKey = userPeer.Interface.PublicKey
-	p.Interface.PrivateKey = userPeer.Interface.PrivateKey
+	if cfg.Core.EditableKeys {
+		p.Interface.PublicKey = userPeer.Interface.PublicKey
+		p.Interface.PrivateKey = userPeer.Interface.PrivateKey
+		p.PresharedKey = userPeer.PresharedKey
+	}
 	p.Interface.Mtu = userPeer.Interface.Mtu
 	p.PersistentKeepalive = userPeer.PersistentKeepalive
 	p.ExpiresAt = userPeer.ExpiresAt
@@ -142,8 +145,6 @@ func (p *Peer) OverwriteUserEditableFields(userPeer *Peer, cfg *config.Config) {
 	}
 	p.Disabled = userPeer.Disabled
 	p.DisabledReason = userPeer.DisabledReason
-	p.PresharedKey = userPeer.PresharedKey
-	
 }
 
 type PeerInterfaceConfig struct {
