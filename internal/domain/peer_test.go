@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/h44z/wg-portal/internal/config"
+
 )
 
 func TestPeer_IsDisabled(t *testing.T) {
@@ -97,8 +99,7 @@ func TestPeer_OverwriteUserEditableFields(t *testing.T) {
 	userPeer := &Peer{
 		DisplayName: "New DisplayName",
 	}
-
-	peer.OverwriteUserEditableFields(userPeer)
+	peer.OverwriteUserEditableFields(userPeer, &config.Config{})
 	assert.Equal(t, "New DisplayName", peer.DisplayName)
 }
 

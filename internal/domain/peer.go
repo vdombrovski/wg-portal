@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-
+	"github.com/h44z/wg-portal/internal/config"
 	"github.com/h44z/wg-portal/internal"
 )
 
@@ -129,16 +129,21 @@ func (p *Peer) GenerateDisplayName(prefix string) {
 }
 
 // OverwriteUserEditableFields overwrites the user editable fields of the peer with the values from the userPeer
-func (p *Peer) OverwriteUserEditableFields(userPeer *Peer) {
+func (p *Peer) OverwriteUserEditableFields(userPeer *Peer, cfg *config.Config) {
 	p.DisplayName = userPeer.DisplayName
 	p.Interface.PublicKey = userPeer.Interface.PublicKey
 	p.Interface.PrivateKey = userPeer.Interface.PrivateKey
 	p.Interface.Mtu = userPeer.Interface.Mtu
 	p.PersistentKeepalive = userPeer.PersistentKeepalive
 	p.ExpiresAt = userPeer.ExpiresAt
+	if cfg.Advanced.TwoFactorLifetime > time.Duration(0) {
+		t := time.Now().Add(cfg.Advanced.TwoFactorLifetime)
+		p.ExpiresAt = &t
+	}
 	p.Disabled = userPeer.Disabled
 	p.DisabledReason = userPeer.DisabledReason
 	p.PresharedKey = userPeer.PresharedKey
+	
 }
 
 type PeerInterfaceConfig struct {

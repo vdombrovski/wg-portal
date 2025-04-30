@@ -128,15 +128,34 @@ func (m Manager) handleUserCreationEvent(user domain.User) {
 }
 
 func (m Manager) handleUserLoginEvent(userId domain.UserIdentifier) {
-	if !m.cfg.Core.CreateDefaultPeer {
-		return
-	}
-
 	userPeers, err := m.db.GetUserPeers(context.Background(), userId)
 	if err != nil {
 		slog.Error("failed to retrieve existing peers prior to default peer creation",
 			"user", userId,
 			"error", err)
+		return
+	}
+
+	for _, peer := range userPeers {
+		if m.cfg.Advanced.TwoFactorLifetime == time.Duration(0) {
+			break
+		}
+		expiration := time.Now().Add(m.cfg.Advanced.TwoFactorLifetime)
+		err := m.db.SavePeer(context.Background(), peer.Identifier, func(p *domain.Peer) (*domain.Peer, error) {
+			peer.CopyCalculatedAttributes(p)
+			peer.ExpiresAt = &expiration
+			return &peer, nil
+		})
+		if err != nil {
+			slog.Error("failed to set expiration of peers for users",
+				"user", userId,
+				"error", err)
+			return
+		}
+		slog.Debug("Setting expiration time for peer", "peer", peer.Identifier, "user", userId)
+	}
+
+	if !m.cfg.Core.CreateDefaultPeer {
 		return
 	}
 

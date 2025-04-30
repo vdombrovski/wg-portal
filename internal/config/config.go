@@ -41,6 +41,7 @@ type Config struct {
 		RulePrioOffset      int           `yaml:"rule_prio_offset"`
 		RouteTableOffset    int           `yaml:"route_table_offset"`
 		ApiAdminOnly        bool          `yaml:"api_admin_only"` // if true, only admin users can access the API
+		TwoFactorLifetime time.Duration `yaml:"two_factor_lifetime"` // if set, all peers will expire after duration and require a login into UI
 	} `yaml:"advanced"`
 
 	Statistics struct {
@@ -137,6 +138,7 @@ func defaultConfig() *Config {
 	cfg.Advanced.RulePrioOffset = 20000
 	cfg.Advanced.RouteTableOffset = 20000
 	cfg.Advanced.ApiAdminOnly = true
+	cfg.Advanced.TwoFactorLifetime = 0 * time.Second
 
 	cfg.Statistics.UsePingChecks = true
 	cfg.Statistics.PingCheckWorkers = 10
