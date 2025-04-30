@@ -117,7 +117,8 @@
   <footer class="page-footer mt-auto">
     <div class="container mt-5">
       <div class="row align-items-center">
-        <div class="col-6">Copyright © {{ companyName }} {{ currentYear }} <span v-if="auth.IsAuthenticated"> - version {{ wgVersion }}</span></div>
+        <div class="col-12 text-center fw-bold">Notice: This is a protected system of {{ companyName }}. Unauthorized access, use, or disclosure of any system property is strictly prohibited and may result in disciplinary measures, civil liability, or criminal prosecution.</div>
+        <div class="col-6 mt-5">Copyright © {{ companyName }} {{ currentYear }} <span v-if="auth.IsAuthenticated"> - version {{ wgVersion }}</span></div>
         <div class="col-6 text-end">
           <div :aria-label="$t('menu.lang')" class="btn-group" role="group">
             <div class="btn-group" role="group">
