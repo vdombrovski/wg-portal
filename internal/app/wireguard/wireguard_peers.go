@@ -164,6 +164,16 @@ func (m Manager) PreparePeer(ctx context.Context, id domain.InterfaceIdentifier)
 		peerMode = domain.InterfaceTypeServer
 	}
 
+	// When two-factor-like authentication is enabled, every peer must be born with an
+	// expiry so it is enforced even if the owner never (re-)logs into the UI to have it
+	// stamped. Without this, auto-provisioned peers (e.g. self-registering external/SSO
+	// users) keep ExpiresAt == nil and never expire. A real UI login extends the window.
+	var expiresAt *time.Time
+	if m.cfg.Advanced.TwoFactorLifetime > 0 {
+		t := time.Now().Add(m.cfg.Advanced.TwoFactorLifetime)
+		expiresAt = &t
+	}
+
 	peerId := domain.PeerIdentifier(kp.PublicKey)
 	freshPeer := &domain.Peer{
 		BaseModel: domain.BaseModel{
@@ -183,7 +193,7 @@ func (m Manager) PreparePeer(ctx context.Context, id domain.InterfaceIdentifier)
 		InterfaceIdentifier: iface.Identifier,
 		Disabled:            nil,
 		DisabledReason:      "",
-		ExpiresAt:           nil,
+		ExpiresAt:           expiresAt,
 		Notes:               "",
 		Interface: domain.PeerInterfaceConfig{
 			KeyPair:           kp,
