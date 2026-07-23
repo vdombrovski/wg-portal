@@ -3,6 +3,7 @@ package wireguard
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/h44z/wg-portal/internal/config"
 	"github.com/h44z/wg-portal/internal/domain"
@@ -264,5 +265,57 @@ func TestCreateDefaultPeer_RespectsInterfaceFlag(t *testing.T) {
 
 	if len(db.savedPeers) != 1 {
 		t.Fatalf("expected 1 peer to be created because interface flag is true, but got %d", len(db.savedPeers))
+	}
+}
+
+// TestPreparePeer_StampsExpiryWhenTwoFactorEnabled guards the two-factor-like
+// authentication feature: freshly prepared peers must carry an expiry as soon as
+// two_factor_lifetime is set, so auto-provisioned peers (e.g. self-registering
+// external/SSO users) are enforced even without a UI login that would stamp them.
+func TestPreparePeer_StampsExpiryWhenTwoFactorEnabled(t *testing.T) {
+	// Arrange
+	cfg := &config.Config{}
+	cfg.Advanced.TwoFactorLifetime = 12 * time.Hour
+
+	ctrlMgr := &ControllerManager{
+		controllers: map[domain.InterfaceBackend]backendInstance{
+			config.LocalBackendName: {Implementation: &mockController{}},
+		},
+	}
+	db := &mockDB{iface: &domain.Interface{Identifier: "wg0", Type: domain.InterfaceTypeServer}}
+	m := Manager{
+		cfg: cfg,
+		bus: &mockBus{},
+		db:  db,
+		wg:  ctrlMgr,
+	}
+
+	ctx := domain.SetUserInfo(context.Background(),
+		&domain.ContextUserInfo{Id: domain.UserIdentifier("admin@example.com"), IsAdmin: true})
+
+	// Act: feature enabled
+	peer, err := m.PreparePeer(ctx, domain.InterfaceIdentifier("wg0"))
+	if err != nil {
+		t.Fatalf("PreparePeer returned error: %v", err)
+	}
+
+	// Assert: expiry stamped in the future
+	if peer.ExpiresAt == nil {
+		t.Fatalf("expected ExpiresAt to be set when two_factor_lifetime > 0, got nil")
+	}
+	if !peer.ExpiresAt.After(time.Now()) {
+		t.Fatalf("expected ExpiresAt to be in the future, got %v", peer.ExpiresAt)
+	}
+
+	// Act: feature disabled -> no expiry
+	cfg.Advanced.TwoFactorLifetime = 0
+	peer, err = m.PreparePeer(ctx, domain.InterfaceIdentifier("wg0"))
+	if err != nil {
+		t.Fatalf("PreparePeer returned error: %v", err)
+	}
+
+	// Assert
+	if peer.ExpiresAt != nil {
+		t.Fatalf("expected ExpiresAt to be nil when two_factor_lifetime == 0, got %v", peer.ExpiresAt)
 	}
 }
